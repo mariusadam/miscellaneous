@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Title of the document</title>
+	</head>
+
+		<body>
+		<canvas id="canvas" width="900" height="500"></canvas>
+
+		<!-- Jquery -->
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+		<script type="text/javascript">
+			$(document).ready(function() {
+				//debugger;
+				function Snake(canvasElement) {
+					var _canvas     = canvasElement[0];
+					var _ctx    	= _canvas.getContext("2d");
+					var _width 	   	= canvasElement.width();
+					var _height 	= canvasElement.height();
+					var _cellWidth  = 10;
+					var _direction  = "right";
+					var _food   	= {x: 0, y: 0};
+					var _snakeArray = [];
+					var _score      = 0;
+					var _gameLoop   = "undefined";
+
+					function _init() {
+						_direction = "right";
+						_score = 0;
+						_createFood();
+						_createSnake();
+
+						if (_gameLoop != "undefined") {
+							clearInterval(_gameLoop);
+						}
+						_gameLoop = setInterval(_paint, 90);
+					};
+
+					this.run = function () {
+						_init();
+					};
+
+					this.setDirection = function(dir) {
+						_direction = dir;
+
+						return this;
+					};
+
+					this.getDirection = function() {
+						return _direction;
+					};
+
+					function _createSnake() {
+						var length = 70;
+						_snakeArray = [];
+						for(var i  = length - 1; i >= 0; i--) {
+							_snakeArray.push({x: i, y: 0});
+						}
+					};
+
+					function _createFood() {
+						_food = {
+							x: Math.round(Math.random() * (_width - _cellWidth) / _cellWidth),
+							y: Math.round(Math.random() * (_height - _cellWidth) / _cellWidth)
+						}
+					};
+
+					function _paint() {
+						_ctx.fillStyle = "white";
+						_ctx.fillRect(0, 0, _width, _height);
+						_ctx.strokeStyle = "black";
+						_ctx.strokeRect(0, 0, _width, _height);
+
+						var nx = _snakeArray[0].x;
+						var ny = _snakeArray[0].y;
+
+						if(_direction == "right") nx++;
+						else if (_direction == "left") nx--;
+						else if (_direction == "up") ny--;
+						else if (_direction =="down") ny++;
+
+						if(nx == -1 || nx == _width / _cellWidth || ny == -1 || ny == _height / _cellWidth || _checkCollision(nx, ny, _snakeArray)) {
+							//restart game
+							_init();
+							return;
+						}
+
+						if (nx == _food.x && ny == _food.y) {
+							var tail = {
+								x: nx,
+								y: ny
+							};
+							_score++;
+
+							_createFood();
+						} else {
+							var tail = _snakeArray.pop();
+							tail.x = nx;
+							tail.y = ny;
+						}
+
+						_snakeArray.unshift(tail);
+
+						for(var i = 0; i < _snakeArray.length; i++) {
+							var cell = _snakeArray[i];
+							_paintCell(cell.x, cell.y);
+						}
+
+						_paintCell(_food.x, _food.y);
+
+						var scoreText = "Score: " + _score;
+						_ctx.fillText(scoreText, 5, _height - 5);
+					};
+
+					function _paintCell(x, y) {
+						_ctx.fillStyle = "blue";
+						_ctx.fillRect(x * _cellWidth, y * _cellWidth, _cellWidth, _cellWidth);
+						_ctx.strokeStyle = "white";
+						_ctx.strokeRect(x * _cellWidth, y * _cellWidth, _cellWidth, _cellWidth);
+					};
+
+					function _checkCollision(x, y, array) {
+						for (var i = 0; i < array.length; i++) {
+							if(array[i].x == x && array[i].y == y) {
+								return true;
+							}
+						}
+						return false;
+					};
+
+				};
+
+				var snake = new Snake($("#canvas"));
+				snake.run();
+
+				$(document).keydown(function(e){
+					var key = e.which;
+					var d = snake.getDirection();
+					//We will add another clause to prevent reverse gear
+					if(key == "37" && d != "right") d = "left";
+					else if(key == "38" && d != "down") d = "up";
+					else if(key == "39" && d != "left") d = "right";
+					else if(key == "40" && d != "up") d = "down";
+					//The snake is now keyboard controllable
+					snake.setDirection(d);
+				})
+			})
+		</script>
+		</body>
+
+</html>
